@@ -44,6 +44,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -67,17 +68,26 @@ OUTPUTS_DIR.mkdir(exist_ok=True)
 def _make_mcp_caller(tool_name: str, server_script: str):
     def call(**kwargs) -> str:
         async def _inner() -> str:
+            print(f"DEBUG: Calling tool '{tool_name}' with arguments: {kwargs}")  # Debugging log
             params = StdioServerParameters(command=sys.executable, args=[server_script])
             async with stdio_client(params) as (r, w):
                 async with ClientSession(r, w) as session:
                     await session.initialize()
                     result = await session.call_tool(tool_name, kwargs)
+                    print(f"DEBUG: Tool '{tool_name}' returned: {result.content}")  # Debugging log
                     return result.content[0].text if result.content else "{}"
         return asyncio.run(_inner())
     call.__name__ = tool_name
     return call
 
 
+# Add Pydantic model for argument validation
+class SearchVenuesArgs(BaseModel):
+    min_capacity: int
+    requires_vegan: bool
+
+
+# Update discover_tools to use Pydantic models
 async def discover_tools(server_script: str) -> list:
     """
     Connect once, list all tools, and wrap each as a LangChain StructuredTool.
@@ -93,10 +103,12 @@ async def discover_tools(server_script: str) -> list:
             raw   = await session.list_tools()
             tools = []
             for t in raw.tools:
+                args_schema = SearchVenuesArgs if t.name == "search_venues" else None
                 lc_tool = StructuredTool.from_function(
                     func=_make_mcp_caller(t.name, server_script),
                     name=t.name,
                     description=t.description or f"MCP tool: {t.name}",
+                    args_schema=args_schema,
                 )
                 tools.append(lc_tool)
             return tools, [t.name for t in raw.tools]
