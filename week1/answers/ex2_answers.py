@@ -30,7 +30,7 @@ TASK_A_CATERING_COST_GBP = 5600.0
 # Did the weather tool return outdoor_ok = True or False?
 TASK_A_OUTDOOR_OK = True
 
-TASK_A_NOTES = "The agent checked both venues as instructed, chose The Albanach over The Haymarket Vaults because it has higher capacity (180 vs 160). The agent noted it could not verify the quiet corner requirement via the available tools."   # optional — anything unexpected
+TASK_A_NOTES = "I switched to a non-default model (deepseek-ai/DeepSeek-R1-0528). The agent checked both venues as instructed, chose The Albanach over The Haymarket Vaults because it has higher capacity (180 vs 160). The agent noted it could not verify the quiet corner requirement via the available tools."   # optional — anything unexpected
 
 # ── Task B ─────────────────────────────────────────────────────────────────
 
